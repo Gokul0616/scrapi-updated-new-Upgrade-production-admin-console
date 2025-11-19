@@ -21,6 +21,10 @@ class ScrapeRequest(BaseModel):
     input_data: Dict[str, Any]
     run_id: str  # MongoDB run ID from Node.js backend
 
+class EnrichRequest(BaseModel):
+    run_id: str
+    places_data: List[Dict[str, Any]]
+
 class TaskStatusResponse(BaseModel):
     task_id: str
     status: str
