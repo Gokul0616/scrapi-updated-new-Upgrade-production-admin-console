@@ -108,6 +108,31 @@ async def cancel_task(task_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/enrich")
+async def create_enrichment_task(request: EnrichRequest):
+    """
+    Create a background enrichment task for scraped places.
+    This runs asynchronously and sends WebSocket updates as each place is enriched.
+    """
+    try:
+        # Generate task ID for enrichment
+        enrich_task_id = f"{request.run_id}_enrich"
+        
+        # Send enrichment task to Celery queue
+        task = enrich_websites_task.apply_async(
+            args=[request.run_id, request.places_data],
+            task_id=enrich_task_id
+        )
+        
+        return {
+            "task_id": task.id,
+            "status": "queued",
+            "message": f"Enrichment task queued for {len(request.places_data)} places",
+            "places_count": len(request.places_data)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 # ============================================
 # Proxy Management Endpoints
