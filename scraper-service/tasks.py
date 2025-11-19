@@ -7,7 +7,12 @@ from scrapers.facebook import scrape_facebook
 from scrapers.linkedin import scrape_linkedin
 from scrapers.tiktok import scrape_tiktok
 from scrapers.website import scrape_website
+from website_enrichment import enrichment_service
 import traceback
+import asyncio
+import logging
+
+logger = logging.getLogger(__name__)
 
 @celery_app.task(bind=True, name='tasks.scrape_task')
 def scrape_task(self, actor_id, input_data):
