@@ -118,7 +118,7 @@ const getNestedValue = (obj, path) => {
 };
 
 // Helper component to render cell value based on type
-const RenderCellValue = ({ value, type, fieldKey, showAllSocialMedia = false }) => {
+const RenderCellValue = ({ value, type, fieldKey, showAllSocialMedia = false, rowData = null, rowIndex = 0 }) => {
   if (value === null || value === undefined || value === '') {
     return <span className="text-muted-foreground">-</span>;
   }
@@ -126,6 +126,20 @@ const RenderCellValue = ({ value, type, fieldKey, showAllSocialMedia = false }) 
   // Special handling for socialMedia object - render with icons
   if (fieldKey === 'socialMedia' && typeof value === 'object' && !Array.isArray(value)) {
     return <SocialMediaLinks socialMedia={value} showAll={showAllSocialMedia} maxVisible={5} />;
+  }
+
+  // Special handling for gallery type (images/videos)
+  if (type === 'gallery' && Array.isArray(value)) {
+    const images = fieldKey === 'images' ? value : (rowData?.images || []);
+    const videos = fieldKey === 'videos' ? value : (rowData?.videos || []);
+    
+    return (
+      <ImageThumbnailCell 
+        images={images}
+        videos={videos}
+        rowIndex={rowIndex}
+      />
+    );
   }
 
   switch (type) {
