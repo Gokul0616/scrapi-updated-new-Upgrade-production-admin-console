@@ -13,6 +13,7 @@ import { useToast } from '../hooks/use-toast';
 import { useWebSocket } from '../contexts/WebSocketContext';
 import { JsonViewerTrigger } from '../components/JsonViewer';
 import { SocialMediaLinks } from '../components/SocialMediaLinks';
+import { ImageThumbnailCell } from '../components/ImageGalleryModal';
 import api from '../services/api';
 
 // Google Maps Constant Column Configuration (Apify-style)
