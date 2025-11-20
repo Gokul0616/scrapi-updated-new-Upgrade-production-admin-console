@@ -297,16 +297,16 @@ const FloatingChatWidget = () => {
           <div className="space-y-4">
             <p>The AI assistant can help you manage your scraping tasks and analyze data.</p>
             <div className="space-y-2">
-              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
                 <h4 className="font-medium text-sm mb-1">📖 Read-Only Access</h4>
                 <p className="text-xs text-gray-600 dark:text-gray-300">
                   View data, query runs, and get insights (no modifications)
                 </p>
               </div>
-              <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
-                <h4 className="font-medium text-sm mb-1">🔓 Full Access</h4>
+              <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg border border-orange-300 dark:border-orange-700">
+                <h4 className="font-medium text-sm mb-1">🔓 Full Access (Agentic Mode)</h4>
                 <p className="text-xs text-gray-600 dark:text-gray-300">
-                  Create tasks, update runs, and make changes to your data
+                  Create tasks, update runs, execute actions, and make autonomous decisions
                 </p>
               </div>
             </div>
