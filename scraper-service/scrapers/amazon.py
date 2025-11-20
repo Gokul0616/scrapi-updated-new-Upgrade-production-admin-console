@@ -125,6 +125,15 @@ class AmazonProductScraper(BaseScraper):
     ) -> List[Dict[str, Any]]:
         """Main scraping method for Amazon products."""
         search_keywords = config.get('search_keywords', [])
+        
+        # FIX: Ensure search_keywords is always a list (not a string)
+        # If it's a string like "laptop", convert it to ["laptop"]
+        # Otherwise Python will iterate over each character: "l", "a", "p", "t", "o", "p"
+        if isinstance(search_keywords, str):
+            search_keywords = [search_keywords]
+        elif not isinstance(search_keywords, list):
+            search_keywords = []
+        
         max_results = int(config.get('max_results', 50))
         extract_reviews = config.get('extract_reviews', False)
         min_rating = float(config.get('min_rating', 0))
