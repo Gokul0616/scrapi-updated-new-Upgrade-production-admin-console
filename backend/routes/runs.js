@@ -219,6 +219,40 @@ router.post('/', authMiddleware, async (req, res) => {
       }
     }
     
+    // Amazon specific transformations
+    if (actorId === 'amazon') {
+      // FIX: Ensure search_keywords is always an array (not a string)
+      // If user sends "laptop" instead of ["laptop"], convert it
+      if (transformedInput.search_keywords) {
+        if (typeof transformedInput.search_keywords === 'string') {
+          transformedInput.search_keywords = [transformedInput.search_keywords];
+        } else if (!Array.isArray(transformedInput.search_keywords)) {
+          transformedInput.search_keywords = [];
+        }
+      }
+      
+      // Transform camelCase to snake_case for Python
+      if (transformedInput.maxResults !== undefined) {
+        transformedInput.max_results = transformedInput.maxResults;
+        delete transformedInput.maxResults;
+      }
+      
+      if (transformedInput.extractReviews !== undefined) {
+        transformedInput.extract_reviews = transformedInput.extractReviews;
+        delete transformedInput.extractReviews;
+      }
+      
+      if (transformedInput.minRating !== undefined) {
+        transformedInput.min_rating = transformedInput.minRating;
+        delete transformedInput.minRating;
+      }
+      
+      if (transformedInput.maxPrice !== undefined) {
+        transformedInput.max_price = transformedInput.maxPrice;
+        delete transformedInput.maxPrice;
+      }
+    }
+    
     // Send scraping job to Python service via Celery queue
     try {
       await axios.post(`${SCRAPER_SERVICE_URL}/scrape`, {
