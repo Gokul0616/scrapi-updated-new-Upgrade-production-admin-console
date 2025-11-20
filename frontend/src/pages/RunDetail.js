@@ -88,8 +88,8 @@ const AMAZON_COLUMNS = {
     { key: 'shipping', label: 'Shipping Info', type: 'text' }
   ],
   media: [
-    { key: 'images', label: 'Product Images', type: 'array' },
-    { key: 'videos', label: 'Product Videos', type: 'array' }
+    { key: 'images', label: 'Product Images', type: 'gallery' },
+    { key: 'videos', label: 'Product Videos', type: 'gallery' }
   ],
   productDetails: [
     { key: 'description', label: 'Description', type: 'text' },
