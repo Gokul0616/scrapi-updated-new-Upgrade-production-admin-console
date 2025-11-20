@@ -273,7 +273,7 @@ const FloatingChatWidget = () => {
                   <button
                     onClick={sendMessage}
                     disabled={isLoading || !inputMessage.trim() || !permissions?.enabled}
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl p-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-xl p-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     data-testid="send-message-button"
                   >
                     <Send className="w-5 h-5" />
