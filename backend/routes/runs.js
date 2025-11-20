@@ -197,6 +197,17 @@ router.post('/', authMiddleware, async (req, res) => {
         delete transformedInput.query;
       }
       
+      // FIX: Ensure search_terms is always an array (not a string)
+      if (transformedInput.search_terms) {
+        if (typeof transformedInput.search_terms === 'string') {
+          // If it's a string, convert it to a single-item array
+          transformedInput.search_terms = [transformedInput.search_terms];
+        } else if (!Array.isArray(transformedInput.search_terms)) {
+          // If it's not an array or string, default to empty array
+          transformedInput.search_terms = [];
+        }
+      }
+      
       // Transform camelCase to snake_case for Python
       if (transformedInput.maxResults !== undefined) {
         transformedInput.max_results = transformedInput.maxResults;
