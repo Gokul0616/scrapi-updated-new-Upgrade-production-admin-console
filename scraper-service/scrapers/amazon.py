@@ -558,3 +558,40 @@ class AmazonProductScraper(BaseScraper):
             logger.error(f"Error extracting reviews for {asin}: {e}")
         
         return reviews
+
+
+# Wrapper function for backward compatibility with sync calls
+def scrape_amazon(input_data):
+    """
+    Synchronous wrapper for the async AmazonProductScraper.
+    """
+    from proxy_manager import ProxyManager
+    from scraper_engine import ScraperEngine
+    import asyncio
+    
+    # Create engine and scraper
+    proxy_manager = ProxyManager()
+    engine = ScraperEngine(proxy_manager)
+    scraper = AmazonProductScraper(engine)
+    
+    # Run async scrape in event loop
+    try:
+        # Get or create event loop
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        
+        # Run the async scrape method
+        results = loop.run_until_complete(scraper.scrape(input_data))
+        
+        # Cleanup
+        loop.run_until_complete(engine.cleanup())
+        
+        return results
+    except Exception as e:
+        logger.error(f"Error in scrape_amazon: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return {'error': str(e)}
