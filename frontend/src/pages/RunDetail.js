@@ -59,6 +59,58 @@ const GOOGLE_MAPS_COLUMNS = {
   ]
 };
 
+// Amazon Product Constant Column Configuration
+// Field names match actual scraper output from Amazon Product Scraper
+const AMAZON_COLUMNS = {
+  overview: [
+    { key: 'title', label: 'Product Title', type: 'text' },
+    { key: 'asin', label: 'ASIN', type: 'text' },
+    { key: 'brand', label: 'Brand', type: 'text' },
+    { key: 'category', label: 'Category', type: 'text' },
+    { key: 'url', label: 'Product URL', type: 'url' }
+  ],
+  pricing: [
+    { key: 'price', label: 'Current Price', type: 'number' },
+    { key: 'originalPrice', label: 'Original Price', type: 'number' },
+    { key: 'discount', label: 'Discount %', type: 'number' },
+    { key: 'currency', label: 'Currency', type: 'text' }
+  ],
+  ratingsReviews: [
+    { key: 'rating', label: 'Rating', type: 'number' },
+    { key: 'reviewCount', label: 'Review Count', type: 'number' },
+    { key: 'reviews', label: 'Reviews', type: 'array' }
+  ],
+  availability: [
+    { key: 'availability', label: 'Availability', type: 'text' },
+    { key: 'prime', label: 'Prime Eligible', type: 'boolean' },
+    { key: 'stock', label: 'Stock Quantity', type: 'number' },
+    { key: 'shipping', label: 'Shipping Info', type: 'text' }
+  ],
+  media: [
+    { key: 'images', label: 'Product Images', type: 'array' },
+    { key: 'videos', label: 'Product Videos', type: 'array' }
+  ],
+  productDetails: [
+    { key: 'description', label: 'Description', type: 'text' },
+    { key: 'features', label: 'Key Features', type: 'array' },
+    { key: 'color', label: 'Color', type: 'text' },
+    { key: 'size', label: 'Size', type: 'text' }
+  ],
+  specifications: [
+    { key: 'dimensions', label: 'Dimensions', type: 'complex' },
+    { key: 'specifications', label: 'Technical Specs', type: 'complex' }
+  ],
+  sellerInfo: [
+    { key: 'seller', label: 'Seller Name', type: 'text' },
+    { key: 'soldBy', label: 'Sold By', type: 'text' },
+    { key: 'shipsFrom', label: 'Ships From', type: 'text' }
+  ],
+  additional: [
+    { key: 'bestSellerRank', label: 'Best Seller Rank', type: 'text' },
+    { key: 'searchKeyword', label: 'Search Keyword', type: 'text' }
+  ]
+};
+
 // Helper function to get nested value from object
 const getNestedValue = (obj, path) => {
   return path.split('.').reduce((current, key) => current?.[key], obj);
