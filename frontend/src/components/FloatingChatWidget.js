@@ -78,6 +78,12 @@ const FloatingChatWidget = () => {
   const sendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return;
 
+    // Check if permissions are set, if not show modal
+    if (!permissions?.enabled) {
+      setShowPermissionModal(true);
+      return;
+    }
+
     const userMessage = {
       role: 'user',
       content: inputMessage,
