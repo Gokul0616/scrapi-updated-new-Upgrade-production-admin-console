@@ -103,6 +103,14 @@ class GoogleMapsScraperV3(BaseScraper):
         Main scraping method with enhanced performance.
         """
         search_terms = config.get('search_terms', [])
+        
+        # FIX: Ensure search_terms is always a list (not a string)
+        # If it's a string, convert it to a single-item list
+        if isinstance(search_terms, str):
+            search_terms = [search_terms]
+        elif not isinstance(search_terms, list):
+            search_terms = []
+        
         location = config.get('location', '')
         max_results = config.get('max_results', 100)
         extract_reviews = config.get('extract_reviews', False)
