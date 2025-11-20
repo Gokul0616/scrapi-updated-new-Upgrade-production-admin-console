@@ -298,10 +298,10 @@ const FloatingChatWidget = () => {
       <AlertModal
         open={showPermissionModal}
         onOpenChange={setShowPermissionModal}
-        title="🤖 AI Assistant Permissions"
+        title="🤖 Set AI Assistant Permissions"
         description={
           <div className="space-y-4">
-            <p>The AI assistant can help you manage your scraping tasks and analyze data.</p>
+            <p className="text-sm">Before I can help you, please choose what level of access I should have:</p>
             <div className="space-y-2">
               <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
                 <h4 className="font-medium text-sm mb-1">📖 Read-Only Access</h4>
@@ -317,7 +317,7 @@ const FloatingChatWidget = () => {
               </div>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              You can change this later in settings.
+              You can change this anytime in settings.
             </p>
           </div>
         }
