@@ -97,7 +97,7 @@ const actorRegistry = [
     actorId: 'amazon',
     name: 'Amazon Product Scraper',
     title: 'Amazon Product Data Extractor',
-    description: 'Extract product details from Amazon including prices, reviews, ratings, images, and more.',
+    description: '🚀 Comprehensive Amazon product scraper with 50+ fields! Extract: products, prices, reviews, ratings, images, videos, seller info, shipping details, dimensions, specifications, and more. Multi-keyword search with filtering.',
     author: 'compass',
     slug: 'compass/amazon-scraper',
     category: 'E-commerce',
@@ -108,31 +108,68 @@ const actorRegistry = [
     scraperFunction: null,
     inputFields: [
       {
-        key: 'url',
-        label: 'Amazon Product URL',
-        type: 'text',
+        key: 'search_keywords',
+        label: 'Search Keywords',
+        type: 'textarea',
         required: true,
-        placeholder: 'https://www.amazon.com/dp/B08...',
-        description: 'Full Amazon product page URL'
+        placeholder: 'wireless headphones\nlaptop stand\nphone case',
+        description: 'Product keywords to search (one per line). Example: "wireless headphones", "laptop stand"'
       },
       {
-        key: 'country',
-        label: 'Amazon Domain',
-        type: 'select',
+        key: 'max_results',
+        label: 'Maximum Results per Keyword',
+        type: 'number',
         required: false,
-        default: 'com',
-        options: [
-          { value: 'com', label: 'United States (.com)' },
-          { value: 'co.uk', label: 'United Kingdom (.co.uk)' },
-          { value: 'de', label: 'Germany (.de)' },
-          { value: 'fr', label: 'France (.fr)' },
-          { value: 'ca', label: 'Canada (.ca)' }
-        ],
-        description: 'Amazon country domain to scrape from'
+        default: 50,
+        placeholder: '50',
+        description: 'Maximum number of products to scrape per keyword (1-200)'
+      },
+      {
+        key: 'extract_reviews',
+        label: 'Extract Review Text',
+        type: 'checkbox',
+        required: false,
+        default: false,
+        description: 'Extract actual review text from product pages (increases scraping time)'
+      },
+      {
+        key: 'min_rating',
+        label: 'Minimum Rating',
+        type: 'number',
+        required: false,
+        default: 0,
+        placeholder: '0',
+        description: 'Filter products by minimum rating (0-5). Set 0 for no filter.'
+      },
+      {
+        key: 'max_price',
+        label: 'Maximum Price (USD)',
+        type: 'number',
+        required: false,
+        default: 0,
+        placeholder: '0',
+        description: 'Filter products by maximum price in USD. Set 0 for no filter.'
       }
     ],
     outputFields: [
-      'title', 'asin', 'price', 'rating', 'reviews', 'images[]', 'description', 'features[]', 'inStock'
+      // Basic Info
+      'asin', 'title', 'url', 'brand', 'category',
+      // Pricing
+      'price', 'originalPrice', 'discount', 'currency',
+      // Ratings & Reviews
+      'rating', 'reviewCount', 'reviews[]',
+      // Availability
+      'availability', 'prime', 'stock', 'shipping',
+      // Media
+      'images[]', 'videos[]',
+      // Product Details
+      'description', 'features[]', 'color', 'size',
+      // Dimensions & Specs
+      'dimensions.size', 'dimensions.weight', 'specifications',
+      // Seller Info
+      'seller', 'soldBy', 'shipsFrom',
+      // Additional
+      'bestSellerRank', 'searchKeyword'
     ]
   },
   {
