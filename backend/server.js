@@ -254,6 +254,7 @@ const issuesRoutes = require('./routes/issues');
 const adminRoutes = require('./routes/admin');
 const infrastructureRoutes = require('./routes/infrastructure'); // Phase 3
 const phase4Routes = require('./routes/phase4'); // Phase 4
+const chatbotRoutes = require('./routes/chatbot'); // AI Chatbot
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -266,6 +267,7 @@ app.use('/api/issues', issuesRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/infrastructure', infrastructureRoutes); // Phase 3
 app.use('/api/phase4', phase4Routes); // Phase 4
+app.use('/api/chatbot', chatbotRoutes); // AI Chatbot
 
 // Basic health check
 app.get('/api/', (req, res) => {
