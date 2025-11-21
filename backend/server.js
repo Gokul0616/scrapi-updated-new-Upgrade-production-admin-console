@@ -31,6 +31,10 @@ const envConfig = getConfig();
 // Security: Add Helmet middleware
 app.use(helmet());
 
+// Trust proxy - required when running behind Kubernetes ingress or reverse proxy
+// This allows Express to properly read X-Forwarded-* headers
+app.set('trust proxy', true);
+
 // Rate limiting configuration
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
