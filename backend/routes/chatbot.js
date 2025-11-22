@@ -430,6 +430,7 @@ async function callOpenRouter(messages) {
     };
   } catch (error) {
     logger.warn('OpenRouter API failed:', error.message);
+    logger.warn('OpenRouter error details:', error.response?.data || error.code);
     throw error;
   }
 }
