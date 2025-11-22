@@ -439,7 +439,7 @@ async function callFallbackLLM(messages) {
         fallbackType: 'openai'
       };
     }
-  } catch (emergen error) {
+  } catch (error) {
     logger.error('Emergent/Kindo fallback failed:', error.message);
     
     // If Emergent fails and we have OpenAI key, try OpenAI as final fallback
