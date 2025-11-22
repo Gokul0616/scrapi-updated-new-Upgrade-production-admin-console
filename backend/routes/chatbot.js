@@ -389,25 +389,80 @@ function parseToolCalls(content) {
 }
 
 /**
- * Helper function to call OpenAI with Emergent LLM key (fallback)
+ * Helper function to call fallback LLM (Emergent or OpenAI)
  */
-async function callEmergentLLM(messages) {
-  try {
-    logger.info('Using Emergent LLM fallback with model:', FALLBACK_MODEL);
-    logger.info('Emergent LLM Key present:', EMERGENT_LLM_KEY ? 'YES' : 'NO');
-    
-    const response = await openaiClient.chat.completions.create({
-      model: FALLBACK_MODEL,
-      messages: messages,
-    });
+async function callFallbackLLM(messages) {
+  if (!fallbackClient) {
+    throw new Error('No fallback LLM configured');
+  }
 
-    return {
-      content: response.choices[0].message.content || '',
-      usedFallback: true
-    };
-  } catch (error) {
-    logger.error('Emergent LLM fallback error:', error.message);
-    logger.error('Emergent LLM error details:', error.response?.data || error.stack);
+  logger.info('Using fallback LLM with model:', FALLBACK_MODEL);
+  logger.info('Fallback type:', fallbackClient.type);
+
+  try {
+    if (fallbackClient.type === 'emergent') {
+      // Try Kindo API with Emergent key
+      logger.info('Attempting Kindo API with Emergent key');
+      
+      const response = await axios.post(
+        'https://llm.kindo.ai/v1/chat/completions',
+        {
+          model: FALLBACK_MODEL,
+          messages: messages
+        },
+        {
+          headers: {
+            'content-type': 'application/json',
+            'api-key': fallbackClient.apiKey
+          },
+          timeout: 30000
+        }
+      );
+
+      return {
+        content: response.data.choices[0].message.content || '',
+        usedFallback: true,
+        fallbackType: 'emergent'
+      };
+    } else if (fallbackClient.type === 'openai') {
+      // Use OpenAI client
+      logger.info('Using OpenAI as fallback');
+      
+      const response = await fallbackClient.client.chat.completions.create({
+        model: FALLBACK_MODEL,
+        messages: messages,
+      });
+
+      return {
+        content: response.choices[0].message.content || '',
+        usedFallback: true,
+        fallbackType: 'openai'
+      };
+    }
+  } catch (emergen error) {
+    logger.error('Emergent/Kindo fallback failed:', error.message);
+    
+    // If Emergent fails and we have OpenAI key, try OpenAI as final fallback
+    if (fallbackClient.type === 'emergent' && OPENAI_API_KEY) {
+      logger.info('Emergent failed, trying OpenAI as final fallback');
+      try {
+        const openaiClient = new OpenAI({ apiKey: OPENAI_API_KEY });
+        const response = await openaiClient.chat.completions.create({
+          model: FALLBACK_MODEL,
+          messages: messages,
+        });
+
+        return {
+          content: response.choices[0].message.content || '',
+          usedFallback: true,
+          fallbackType: 'openai'
+        };
+      } catch (openaiError) {
+        logger.error('OpenAI final fallback also failed:', openaiError.message);
+        throw openaiError;
+      }
+    }
+    
     throw error;
   }
 }
