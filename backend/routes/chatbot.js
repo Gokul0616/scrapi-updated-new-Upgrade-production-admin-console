@@ -383,6 +383,7 @@ function parseToolCalls(content) {
 async function callEmergentLLM(messages) {
   try {
     logger.info('Using Emergent LLM fallback with model:', FALLBACK_MODEL);
+    logger.info('Emergent LLM Key present:', EMERGENT_LLM_KEY ? 'YES' : 'NO');
     
     const response = await openaiClient.chat.completions.create({
       model: FALLBACK_MODEL,
@@ -395,6 +396,7 @@ async function callEmergentLLM(messages) {
     };
   } catch (error) {
     logger.error('Emergent LLM fallback error:', error.message);
+    logger.error('Emergent LLM error details:', error.response?.data || error.stack);
     throw error;
   }
 }
