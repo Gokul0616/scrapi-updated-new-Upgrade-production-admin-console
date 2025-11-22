@@ -378,6 +378,61 @@ function parseToolCalls(content) {
 }
 
 /**
+ * Helper function to call OpenAI with Emergent LLM key (fallback)
+ */
+async function callEmergentLLM(messages) {
+  try {
+    logger.info('Using Emergent LLM fallback with model:', FALLBACK_MODEL);
+    
+    const response = await openaiClient.chat.completions.create({
+      model: FALLBACK_MODEL,
+      messages: messages,
+    });
+
+    return {
+      content: response.choices[0].message.content || '',
+      usedFallback: true
+    };
+  } catch (error) {
+    logger.error('Emergent LLM fallback error:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Helper function to call OpenRouter API (primary)
+ */
+async function callOpenRouter(messages) {
+  try {
+    const response = await axios.post(
+      OPENROUTER_API_URL,
+      {
+        model: MODEL,
+        messages,
+        extra_body: { reasoning: { enabled: true } }
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        timeout: 30000 // 30 second timeout
+      }
+    );
+
+    const assistantMessage = response.data.choices[0].message;
+    return {
+      content: assistantMessage.content || '',
+      reasoning: assistantMessage.reasoning_details,
+      usedFallback: false
+    };
+  } catch (error) {
+    logger.warn('OpenRouter API failed:', error.message);
+    throw error;
+  }
+}
+
+/**
  * POST /api/chatbot/chat
  * Send message to chatbot and get response
  */
@@ -405,25 +460,32 @@ router.post('/chat', auth, async (req, res) => {
       { role: 'user', content: message }
     ];
 
-    // Call OpenRouter API
-    const response = await axios.post(
-      OPENROUTER_API_URL,
-      {
-        model: MODEL,
-        messages,
-        extra_body: { reasoning: { enabled: true } }
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-          'Content-Type': 'application/json',
-        }
-      }
-    );
+    // Try OpenRouter first, fallback to Emergent LLM on failure
+    let assistantResponse;
+    let usedFallback = false;
+    let reasoningDetails = null;
 
-    const assistantMessage = response.data.choices[0].message;
-    let content = assistantMessage.content || '';
-    const reasoningDetails = assistantMessage.reasoning_details;
+    try {
+      // Primary: Try OpenRouter API
+      assistantResponse = await callOpenRouter(messages);
+      usedFallback = assistantResponse.usedFallback;
+      reasoningDetails = assistantResponse.reasoning;
+    } catch (openRouterError) {
+      // Fallback: Use Emergent LLM key
+      logger.info('Falling back to Emergent LLM due to OpenRouter failure');
+      try {
+        assistantResponse = await callEmergentLLM(messages);
+        usedFallback = assistantResponse.usedFallback;
+      } catch (fallbackError) {
+        logger.error('Both OpenRouter and Emergent LLM failed:', fallbackError.message);
+        return res.status(500).json({ 
+          error: 'All AI services are currently unavailable. Please try again later.',
+          details: 'Both primary and fallback services failed'
+        });
+      }
+    }
+
+    let content = assistantResponse.content;
 
     // Check if assistant wants to use tools
     const toolCalls = parseToolCalls(content);
@@ -441,8 +503,7 @@ router.post('/chat', auth, async (req, res) => {
         ...messages,
         {
           role: 'assistant',
-          content: content,
-          reasoning_details: reasoningDetails
+          content: content
         },
         {
           role: 'user',
@@ -450,30 +511,29 @@ router.post('/chat', auth, async (req, res) => {
         }
       ];
 
-      const followUpResponse = await axios.post(
-        OPENROUTER_API_URL,
-        {
-          model: MODEL,
-          messages: followUpMessages,
-          extra_body: { reasoning: { enabled: true } }
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-            'Content-Type': 'application/json',
-          }
+      // Try follow-up with same fallback logic
+      try {
+        assistantResponse = await callOpenRouter(followUpMessages);
+        content = assistantResponse.content;
+      } catch (openRouterError) {
+        logger.info('Using fallback for follow-up call');
+        try {
+          assistantResponse = await callEmergentLLM(followUpMessages);
+          content = assistantResponse.content;
+          usedFallback = true;
+        } catch (fallbackError) {
+          logger.error('Follow-up call failed on both services');
+          // Use the original content with tool results
         }
-      );
-
-      const finalMessage = followUpResponse.data.choices[0].message;
-      content = finalMessage.content;
+      }
     }
 
     res.json({
       response: content,
       reasoning: reasoningDetails,
       toolsUsed: toolCalls.length > 0,
-      toolResults: toolResults.length > 0 ? toolResults : undefined
+      toolResults: toolResults.length > 0 ? toolResults : undefined,
+      usedFallback: usedFallback // Indicate if fallback was used
     });
 
   } catch (error) {
