@@ -4,7 +4,7 @@ import axios from 'axios';
 // In production (preview domain), use same origin to avoid CORS
 // In local development, use the explicit backend URL
 const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const baseURL = isLocalDev ? 'http://localhost:8001' : window.location.origin;
+const baseURL = isLocalDev ? 'http://localhost:8001' : 'http://51.20.193.44:8001';
 
 // Create axios instance with base configuration
 const api = axios.create({
@@ -38,10 +38,10 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       // Don't redirect if this is the initial auth check (GET /api/auth/me)
       const isAuthCheck = error.config?.url?.includes('/api/auth/me');
-      
+
       // Remove invalid token
       localStorage.removeItem('token');
-      
+
       // Only redirect if:
       // 1. Not the initial auth check
       // 2. Not already on auth pages
@@ -49,12 +49,12 @@ api.interceptors.response.use(
         window.location.href = '/login';
       }
     }
-    
+
     // Handle network errors
     if (!error.response) {
       console.error('Network error:', error.message);
     }
-    
+
     return Promise.reject(error);
   }
 );

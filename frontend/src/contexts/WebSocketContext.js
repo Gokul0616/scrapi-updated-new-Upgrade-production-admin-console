@@ -33,11 +33,11 @@ export const WebSocketProvider = ({ children }) => {
     // Create socket connection with auth
     // Determine connection settings based on environment
     const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    
+
     // In production, use relative path to connect through the API proxy
     // In development, connect directly to backend port
-    const backendUrl = isLocalDev ? 'http://localhost:8001' : '';
-    
+    const backendUrl = isLocalDev ? 'http://localhost:8001' : 'http://51.20.193.44:8001';
+
     const newSocket = io(backendUrl, {
       auth: {
         token: token
@@ -97,11 +97,11 @@ export const WebSocketProvider = ({ children }) => {
     newSocket.on('run:status', (data) => {
       setRunUpdates((prev) => {
         // Find existing entry by runId
-        const existingKey = Object.keys(prev).find(key => 
+        const existingKey = Object.keys(prev).find(key =>
           prev[key].runId === data.runId || key === data.runId
         );
         const existing = existingKey ? prev[existingKey] : {};
-        
+
         return {
           ...prev,
           [data.runId]: {
@@ -130,11 +130,11 @@ export const WebSocketProvider = ({ children }) => {
     newSocket.on('run:completed', (data) => {
       setRunUpdates((prev) => {
         // Find existing entry by runId
-        const existingKey = Object.keys(prev).find(key => 
+        const existingKey = Object.keys(prev).find(key =>
           prev[key].runId === data.runId || key === data.runId
         );
         const existing = existingKey ? prev[existingKey] : {};
-        
+
         return {
           ...prev,
           [data.runId]: {
@@ -150,11 +150,11 @@ export const WebSocketProvider = ({ children }) => {
     newSocket.on('run:failed', (data) => {
       setRunUpdates((prev) => {
         // Find existing entry by runId
-        const existingKey = Object.keys(prev).find(key => 
+        const existingKey = Object.keys(prev).find(key =>
           prev[key].runId === data.runId || key === data.runId
         );
         const existing = existingKey ? prev[existingKey] : {};
-        
+
         return {
           ...prev,
           [data.runId]: {

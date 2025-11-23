@@ -3,10 +3,18 @@ set -e
 
 echo "Starting deployment..."
 
-# Install Node.js 20
+# Install Node.js 20 on Amazon Linux 2023 / 2
 echo "Installing Node.js 20..."
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt-get install -y nodejs
+sudo yum update -y
+sudo yum install -y nodejs npm
+
+# If node is not found or old, try nvm or nodesource (Amazon Linux usually has recent node via yum or dnf)
+# Let's try to ensure we have a recent version
+if ! command -v node &> /dev/null || [[ $(node -v) != v20* ]]; then
+    echo "Installing Node.js 20 via NodeSource..."
+    curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
+    sudo yum install -y nodejs
+fi
 
 # Install pm2 globally if missing
 if ! command -v pm2 &> /dev/null; then
@@ -37,7 +45,7 @@ if ! command -v serve &> /dev/null; then
 fi
 
 pm2 delete admin-console || true
-# Assuming the tarball extracts admin-console/dist to /home/ubuntu/admin-console/dist
-pm2 start "serve -s /home/ubuntu/admin-console/dist -l 3001" --name admin-console
+# Assuming the tarball extracts admin-console/dist to /home/ec2-user/admin-console/dist
+pm2 start "serve -s /home/ec2-user/admin-console/dist -l 3001" --name admin-console
 
 echo "Deployment complete!"

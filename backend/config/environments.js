@@ -13,7 +13,7 @@ const environments = {
     rateLimitMultiplier: 10, // More lenient in dev
     cacheEnabled: false,
   },
-  
+
   staging: {
     name: 'staging',
     logLevel: 'info',
@@ -27,16 +27,14 @@ const environments = {
     rateLimitMultiplier: 2, // Slightly lenient in staging
     cacheEnabled: true,
   },
-  
+
   production: {
     name: 'production',
     logLevel: process.env.LOG_LEVEL || 'info',
-    corsOrigins: [
-      process.env.FRONTEND_URL,
-      ...(process.env.ALLOWED_CORS_ORIGINS ? process.env.ALLOWED_CORS_ORIGINS.split(',') : []),
-      'https://your-domain.com',
-      'https://www.your-domain.com',
-    ].flat().filter(Boolean).filter((value, index, self) => self.indexOf(value) === index), // Remove duplicates
+    corsOrigins: (process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : [
+      'http://localhost:3000',
+      'http://localhost:3001'
+    ]).flat().filter(Boolean).filter((value, index, self) => self.indexOf(value) === index), // Remove duplicates
     enableSwagger: false, // Disable in production for security
     enableDebugRoutes: false,
     rateLimitMultiplier: 1, // Strict in production
@@ -49,12 +47,12 @@ const environments = {
  */
 function getConfig() {
   const env = process.env.NODE_ENV || 'development';
-  
+
   if (!environments[env]) {
     console.warn(`Unknown environment: ${env}, defaulting to development`);
     return environments.development;
   }
-  
+
   return environments[env];
 }
 

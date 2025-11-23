@@ -7,7 +7,8 @@ import {
     Settings,
     LogOut,
     Menu,
-    X
+    X,
+    Users
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -23,6 +24,7 @@ const Layout = ({ children }) => {
 
     const navItems = [
         { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
+        { icon: Users, label: 'Users', path: '/users' },
         { icon: Terminal, label: 'Terminal', path: '/terminal' },
         { icon: FileText, label: 'Logs', path: '/logs' },
         { icon: Settings, label: 'Settings', path: '/settings' },
@@ -45,8 +47,8 @@ const Layout = ({ children }) => {
                         <Menu size={24} />
                     </button>
                     <div className="font-bold text-lg flex items-center gap-2">
-                        <span className="text-[#ff9900]">Scrapi</span>
-                        <span>Admin Console</span>
+                        <span className="text-[#ff9900]">AWS</span>
+                        <span>Console Clone</span>
                     </div>
                 </div>
                 <div className="flex items-center gap-4">

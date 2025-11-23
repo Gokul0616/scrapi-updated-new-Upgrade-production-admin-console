@@ -37,11 +37,6 @@ const userSchema = new mongoose.Schema({
     enum: ['free', 'starter', 'scale', 'business', 'enterprise'],
     default: 'free'
   },
-  role: {
-    type: String,
-    enum: ['user', 'admin'],
-    default: 'user'
-  },
   usage: {
     ramUsedMB: {
       type: Number,

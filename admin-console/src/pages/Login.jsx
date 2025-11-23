@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { getApiUrl } from '../services/api';
+import { API_BASE_URL } from '../config';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -11,7 +11,7 @@ const Login = () => {
     const handleLogin = async (e) => {
         e.preventDefault();
         try {
-            const response = await fetch(getApiUrl('/api/auth/admin/login'), {
+            const response = await fetch(`${API_BASE_URL}/admin/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
@@ -21,13 +21,13 @@ const Login = () => {
 
             if (response.ok) {
                 localStorage.setItem('token', data.token);
-                localStorage.setItem('user', JSON.stringify(data.user));
+                localStorage.setItem('user', JSON.stringify(data.admin));
                 navigate('/');
             } else {
-                setError(data.message || 'Login failed');
+                setError(data.error || 'Login failed');
             }
         } catch (err) {
-            setError('Network error');
+            setError('Network error: ' + err.message);
         }
     };
 
@@ -78,13 +78,11 @@ const Login = () => {
                     >
                         Sign In
                     </button>
-
-                    <div className="mt-4 text-center text-sm">
-                        <Link to="/signup" className="text-[#0073bb] hover:underline">
-                            Create Admin Account
-                        </Link>
-                    </div>
                 </form>
+
+                <div className="mt-4 text-center text-sm">
+                    Don't have an admin account? <Link to="/signup" className="text-[#0073bb] hover:underline">Create Account</Link>
+                </div>
             </div>
         </div>
     );

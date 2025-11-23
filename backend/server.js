@@ -72,7 +72,7 @@ const server = http.createServer(app);
 // Phase 3: Use environment-based CORS origins
 const allowedOrigins = envConfig.corsOrigins.length > 0
   ? envConfig.corsOrigins
-  : ['http://localhost:3000', 'http://localhost:3001'];
+  : ['http://localhost:3000', 'http://localhost:3001', 'http://51.20.193.44:3000', 'http://51.20.193.44:3001'];
 
 logger.info(`CORS Allowed Origins: ${JSON.stringify(allowedOrigins)}`);
 
@@ -310,11 +310,9 @@ const adminRoutes = require('./routes/admin');
 const infrastructureRoutes = require('./routes/infrastructure'); // Phase 3
 const phase4Routes = require('./routes/phase4'); // Phase 4
 const chatbotRoutes = require('./routes/chatbot'); // AI Chatbot
-
 const adminAuthRoutes = require('./routes/adminAuth');
 
 // API Routes
-app.use('/api/auth/admin', adminAuthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/actors', actorRoutes);
 app.use('/api/runs', runRoutes);
@@ -326,6 +324,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/infrastructure', infrastructureRoutes); // Phase 3
 app.use('/api/phase4', phase4Routes); // Phase 4
 app.use('/api/chatbot', chatbotRoutes); // AI Chatbot
+app.use('/api/admin/auth', adminAuthRoutes);
 
 // Basic health check
 app.get('/api/', (req, res) => {

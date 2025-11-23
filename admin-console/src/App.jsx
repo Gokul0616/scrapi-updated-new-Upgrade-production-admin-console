@@ -5,7 +5,9 @@ import Dashboard from './pages/Dashboard';
 import Terminal from './pages/Terminal';
 import Logs from './pages/Logs';
 import Login from './pages/Login';
+
 import Signup from './pages/Signup';
+import Users from './pages/Users';
 
 const ProtectedRoute = ({ children }) => {
     const token = localStorage.getItem('token');
@@ -25,6 +27,12 @@ const App = () => {
                 <Route path="/" element={
                     <ProtectedRoute>
                         <Dashboard />
+                    </ProtectedRoute>
+                } />
+
+                <Route path="/users" element={
+                    <ProtectedRoute>
+                        <Users />
                     </ProtectedRoute>
                 } />
 

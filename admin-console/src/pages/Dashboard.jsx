@@ -4,7 +4,6 @@ import {
     AreaChart, Area
 } from 'recharts';
 import { Users, Activity, Server, AlertCircle } from 'lucide-react';
-import { getApiUrl } from '../services/api';
 
 const StatCard = ({ title, value, icon: Icon, color }) => (
     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
@@ -31,7 +30,7 @@ const Dashboard = () => {
     const fetchStats = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(getApiUrl('/api/admin/stats'), {
+            const response = await fetch('/api/admin/stats', {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (response.ok) {
