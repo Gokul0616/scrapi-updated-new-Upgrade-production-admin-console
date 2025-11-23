@@ -193,8 +193,38 @@ class GoogleMapsScraperV3(BaseScraper):
             search_url = f"{self.base_url}/search/{query.replace(' ', '+')}"
             await page.goto(search_url, wait_until="domcontentloaded", timeout=30000)
             
+            # Handle cookie consent
+            try:
+                consent_button = await page.query_selector('button[aria-label="Accept all"], button:has-text("Accept all")')
+                if consent_button:
+                    logger.info("Found consent button, clicking...")
+                    await consent_button.click()
+                    await asyncio.sleep(2)
+                
+                # Check for another type of consent form
+                consent_form = await page.query_selector('form[action*="consent.google.com"]')
+                if consent_form:
+                    logger.info("Found consent form, trying to accept...")
+                    accept_btn = await consent_form.query_selector('button')
+                    if accept_btn:
+                        await accept_btn.click()
+                        await asyncio.sleep(2)
+            except Exception as e:
+                logger.debug(f"Consent handling error: {str(e)}")
+
             # Wait for results
             await asyncio.sleep(3)
+            
+            # Debug: Log page title and URL
+            title = await page.title()
+            logger.info(f"Current page title: {title}")
+            logger.info(f"Current page URL: {page.url}")
+            
+            # Check if we are on a single place page (redirected)
+            if '/maps/place/' in page.url and '/search/' not in page.url:
+                logger.info("Redirected to single place page")
+                place_urls.add(page.url)
+                return list(place_urls)
             
             # Enhanced scrolling with more attempts
             for scroll_attempt in range(20):  # Increased from 10 to 20

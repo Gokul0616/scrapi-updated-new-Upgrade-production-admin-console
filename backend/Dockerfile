@@ -1,4 +1,4 @@
-FROM node:18-alpine
+FROM node:20-alpine
 
 # Install system dependencies
 RUN apk add --no-cache \
@@ -12,7 +12,7 @@ WORKDIR /app
 COPY package.json yarn.lock ./
 
 # Install dependencies
-RUN yarn install --production --frozen-lockfile
+RUN yarn install --production
 
 # Copy application code
 COPY . .

@@ -160,7 +160,7 @@ async function executeTool(toolName, args, userId, hasFullAccess) {
 
         // Apply search filter if provided
         if (searchTerm) {
-          results = results.filter(item => 
+          results = results.filter(item =>
             JSON.stringify(item).toLowerCase().includes(searchTerm.toLowerCase())
           );
         }
@@ -200,7 +200,8 @@ async function executeTool(toolName, args, userId, hasFullAccess) {
 
         // Trigger scraping via scraper service
         try {
-          await axios.post('http://localhost:8002/scrape', {
+          const SCRAPER_SERVICE_URL = process.env.SCRAPER_SERVICE_URL || 'http://localhost:8002';
+          await axios.post(`${SCRAPER_SERVICE_URL}/scrape`, {
             runId,
             actorId,
             input,
@@ -315,7 +316,7 @@ async function executeTool(toolName, args, userId, hasFullAccess) {
 
       case 'get_insights': {
         const { period = 'week' } = args;
-        
+
         // Calculate date range
         const now = new Date();
         const startDate = new Date();
@@ -334,7 +335,7 @@ async function executeTool(toolName, args, userId, hasFullAccess) {
           successfulRuns: runs.filter(r => r.status === 'succeeded').length,
           failedRuns: runs.filter(r => r.status === 'failed').length,
           totalRecordsScraped: runs.reduce((sum, r) => sum + (r.resultCount || 0), 0),
-          averageRecordsPerRun: runs.length > 0 
+          averageRecordsPerRun: runs.length > 0
             ? Math.round(runs.reduce((sum, r) => sum + (r.resultCount || 0), 0) / runs.length)
             : 0,
           mostUsedActors: []
@@ -368,15 +369,15 @@ async function executeTool(toolName, args, userId, hasFullAccess) {
  */
 function parseToolCalls(content) {
   const tools = [];
-  
+
   // Look for tool call patterns like: TOOL[tool_name]{"arg": "value"}
   const toolPattern = /TOOL\[(\w+)\]\s*(\{[^}]+\})?/g;
   let match;
-  
+
   while ((match = toolPattern.exec(content)) !== null) {
     const toolName = match[1];
     const argsStr = match[2] || '{}';
-    
+
     try {
       const args = JSON.parse(argsStr);
       tools.push({ toolName, args });
@@ -384,7 +385,7 @@ function parseToolCalls(content) {
       logger.warn(`Failed to parse tool args: ${argsStr}`);
     }
   }
-  
+
   return tools;
 }
 
@@ -403,7 +404,7 @@ async function callFallbackLLM(messages) {
     if (fallbackClient.type === 'emergent') {
       // Try Kindo API with Emergent key
       logger.info('Attempting Kindo API with Emergent key');
-      
+
       const response = await axios.post(
         'https://llm.kindo.ai/v1/chat/completions',
         {
@@ -427,7 +428,7 @@ async function callFallbackLLM(messages) {
     } else if (fallbackClient.type === 'openai') {
       // Use OpenAI client
       logger.info('Using OpenAI as fallback');
-      
+
       const response = await fallbackClient.client.chat.completions.create({
         model: FALLBACK_MODEL,
         messages: messages,
@@ -441,7 +442,7 @@ async function callFallbackLLM(messages) {
     }
   } catch (error) {
     logger.error('Emergent/Kindo fallback failed:', error.message);
-    
+
     // If Emergent fails and we have OpenAI key, try OpenAI as final fallback
     if (fallbackClient.type === 'emergent' && OPENAI_API_KEY) {
       logger.info('Emergent failed, trying OpenAI as final fallback');
@@ -462,7 +463,7 @@ async function callFallbackLLM(messages) {
         throw openaiError;
       }
     }
-    
+
     throw error;
   }
 }
@@ -547,7 +548,7 @@ router.post('/chat', auth, async (req, res) => {
         usedFallback = assistantResponse.usedFallback;
       } catch (fallbackError) {
         logger.error('Both OpenRouter and fallback LLM failed:', fallbackError.message);
-        return res.status(500).json({ 
+        return res.status(500).json({
           error: 'All AI services are currently unavailable. Please try again later.',
           details: 'Both primary and fallback services failed'
         });
@@ -607,9 +608,9 @@ router.post('/chat', auth, async (req, res) => {
 
   } catch (error) {
     logger.error('Chatbot error:', error.message);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to process chat message',
-      details: error.response?.data || error.message 
+      details: error.response?.data || error.message
     });
   }
 });

@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: always
+
+  backend:
+    build: ./backend
+    ports:
+      - "8001:8001"
+    environment:
+      - PORT=8001
+      - MONGO_URL=mongodb://mongo:27017/scrapi
+      - REDIS_URL=redis://redis:6379
+      - NODE_ENV=production
+      - JWT_SECRET=dev_secret_change_in_production
+      - RATE_LIMIT_WINDOW_MS=900000
+      - RATE_LIMIT_MAX_REQUESTS=100
+      - AUTH_RATE_LIMIT_MAX=5
+      - ALLOWED_CORS_ORIGINS=http://13.60.190.11:3000,http://localhost:3000
+      - SCRAPER_SERVICE_URL=http://scraper-service:8002
+    depends_on:
+      - mongo
+      - redis
+    restart: always
+
+  scraper-service:
+    build: ./scraper-service
+    ports:
+      - "8002:8002"
+    environment:
+      - SERVICE_HOST=0.0.0.0
+      - SERVICE_PORT=8002
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - redis
+    restart: always
+
+  celery-worker:
+    build: ./scraper-service
+    command: celery -A celery_app worker --loglevel=info --concurrency=4
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - redis
+      - scraper-service
+    restart: always
+
+  mongo:
+    image: mongo:6.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    restart: always
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: always
+
+volumes:
+  mongo_data:
+  redis_data:
