@@ -37,6 +37,11 @@ const userSchema = new mongoose.Schema({
     enum: ['free', 'starter', 'scale', 'business', 'enterprise'],
     default: 'free'
   },
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user'
+  },
   usage: {
     ramUsedMB: {
       type: Number,
@@ -136,11 +141,11 @@ userSchema.index({ username: 1 }, { unique: true });
 userSchema.index({ 'apiTokens.token': 1 }, { sparse: true });
 
 // Method to get usage percentage
-userSchema.methods.getRamUsagePercentage = function() {
+userSchema.methods.getRamUsagePercentage = function () {
   return (this.usage.ramUsedMB / this.usage.ramLimitMB) * 100;
 };
 
-userSchema.methods.getCreditsUsagePercentage = function() {
+userSchema.methods.getCreditsUsagePercentage = function () {
   return (this.usage.creditsUsed / this.usage.creditsLimit) * 100;
 };
 

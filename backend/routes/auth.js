@@ -50,65 +50,65 @@ router.post('/register',
       .withMessage('Name must not exceed 100 characters')
   ],
   async (req, res) => {
-  try {
-    // Check for validation errors
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ error: errors.array()[0].msg });
+    try {
+      // Check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ error: errors.array()[0].msg });
+      }
+
+      const { name, username, email, password } = req.body;
+
+      // Check if user exists
+      const existingUser = await User.findOne({ $or: [{ email }, { username }] });
+      if (existingUser) {
+        if (existingUser.email === email) {
+          return res.status(400).json({ error: 'Email already registered' });
+        }
+        if (existingUser.username === username) {
+          return res.status(400).json({ error: 'Username already taken' });
+        }
+      }
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Create user with random avatar
+      const user = new User({
+        username,
+        email,
+        password: hashedPassword,
+        fullName: name || username,
+        avatar: getRandomAvatar()
+      });
+
+      await user.save();
+
+      // Create JWT token with 30 days expiration
+      const token = jwt.sign(
+        { userId: user._id, username: user.username },
+        process.env.JWT_SECRET,
+        { expiresIn: '30d' }
+      );
+
+      logger.info(`New user registered: ${user.username} (${user.email})`);
+
+      res.status(201).json({
+        token,
+        user: {
+          id: user._id,
+          username: user.username,
+          email: user.email,
+          fullName: user.fullName,
+          avatar: user.avatar,
+          plan: user.plan
+        }
+      });
+    } catch (error) {
+      logger.error('Registration error:', error.message);
+      res.status(500).json({ error: 'Registration failed. Please try again.' });
     }
-
-    const { name, username, email, password } = req.body;
-
-    // Check if user exists
-    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
-    if (existingUser) {
-      if (existingUser.email === email) {
-        return res.status(400).json({ error: 'Email already registered' });
-      }
-      if (existingUser.username === username) {
-        return res.status(400).json({ error: 'Username already taken' });
-      }
-    }
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create user with random avatar
-    const user = new User({
-      username,
-      email,
-      password: hashedPassword,
-      fullName: name || username,
-      avatar: getRandomAvatar()
-    });
-
-    await user.save();
-
-    // Create JWT token with 30 days expiration
-    const token = jwt.sign(
-      { userId: user._id, username: user.username },
-      process.env.JWT_SECRET,
-      { expiresIn: '30d' }
-    );
-
-    logger.info(`New user registered: ${user.username} (${user.email})`);
-    
-    res.status(201).json({
-      token,
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        fullName: user.fullName,
-        avatar: user.avatar,
-        plan: user.plan
-      }
-    });
-  } catch (error) {
-    logger.error('Registration error:', error.message);
-    res.status(500).json({ error: 'Registration failed. Please try again.' });
-  }
-});
+  });
 
 // Login with validation (rate limiting handled globally)
 router.post('/login',
@@ -123,58 +123,58 @@ router.post('/login',
       .withMessage('Password is required')
   ],
   async (req, res) => {
-  try {
-    // Check for validation errors
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ error: errors.array()[0].msg });
-    }
-
-    const { email, password } = req.body;
-
-    // Find user
-    const user = await User.findOne({ email });
-    if (!user) {
-      logger.warn(`Failed login attempt for non-existent user: ${email}`);
-      return res.status(401).json({ error: 'Invalid email or password' });
-    }
-
-    // Check password
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      logger.warn(`Failed login attempt for user: ${email} - incorrect password`);
-      return res.status(401).json({ error: 'Invalid email or password' });
-    }
-
-    // Update last login
-    user.lastLogin = new Date();
-    await user.save();
-
-    // Create JWT token with 30 days expiration
-    const token = jwt.sign(
-      { userId: user._id, username: user.username },
-      process.env.JWT_SECRET,
-      { expiresIn: '30d' }
-    );
-
-    logger.info(`User logged in: ${user.username} (${user.email})`);
-
-    res.json({
-      token,
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        fullName: user.fullName,
-        avatar: user.avatar,
-        plan: user.plan
+    try {
+      // Check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ error: errors.array()[0].msg });
       }
-    });
-  } catch (error) {
-    logger.error('Login error:', error.message);
-    res.status(500).json({ error: 'Login failed. Please try again.' });
-  }
-});
+
+      const { email, password } = req.body;
+
+      // Find user
+      const user = await User.findOne({ email });
+      if (!user) {
+        logger.warn(`Failed login attempt for non-existent user: ${email}`);
+        return res.status(401).json({ error: 'Invalid email or password' });
+      }
+
+      // Check password
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+        logger.warn(`Failed login attempt for user: ${email} - incorrect password`);
+        return res.status(401).json({ error: 'Invalid email or password' });
+      }
+
+      // Update last login
+      user.lastLogin = new Date();
+      await user.save();
+
+      // Create JWT token with 30 days expiration
+      const token = jwt.sign(
+        { userId: user._id, username: user.username },
+        process.env.JWT_SECRET,
+        { expiresIn: '30d' }
+      );
+
+      logger.info(`User logged in: ${user.username} (${user.email})`);
+
+      res.json({
+        token,
+        user: {
+          id: user._id,
+          username: user.username,
+          email: user.email,
+          fullName: user.fullName,
+          avatar: user.avatar,
+          plan: user.plan
+        }
+      });
+    } catch (error) {
+      logger.error('Login error:', error.message);
+      res.status(500).json({ error: 'Login failed. Please try again.' });
+    }
+  });
 
 // Get current user profile
 router.get('/me', authMiddleware, async (req, res) => {
@@ -183,7 +183,7 @@ router.get('/me', authMiddleware, async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
-    res.json({ 
+    res.json({
       user: {
         id: user._id,
         username: user.username,
@@ -245,7 +245,7 @@ router.put('/profile', authMiddleware, async (req, res) => {
 router.put('/avatar', authMiddleware, async (req, res) => {
   try {
     const { avatar } = req.body;
-    
+
     if (!avatar) {
       return res.status(400).json({ error: 'Avatar URL is required' });
     }
@@ -322,7 +322,7 @@ router.put('/password', authMiddleware, async (req, res) => {
 router.post('/api-tokens', authMiddleware, async (req, res) => {
   try {
     const { name } = req.body;
-    
+
     if (!name) {
       return res.status(400).json({ error: 'Token name is required' });
     }
@@ -389,7 +389,7 @@ router.delete('/api-tokens/:tokenId', authMiddleware, async (req, res) => {
 router.put('/notifications', authMiddleware, async (req, res) => {
   try {
     const { email, platform, actorRuns, billing } = req.body;
-    
+
     const user = await User.findById(req.userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });

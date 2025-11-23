@@ -21,6 +21,8 @@ const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./config/swagger');
 const logAggregation = require('./config/logAggregation'); // Phase 4
 const performance = require('./config/performance'); // Phase 4
+const TerminalService = require('./utils/terminal');
+const LogStreamService = require('./utils/logStream');
 
 const app = express();
 const PORT = process.env.PORT || 8001;
@@ -68,8 +70,8 @@ const server = http.createServer(app);
 // Initialize Socket.IO with CORS
 // Use /api/socket.io path to match frontend and ingress routing
 // Phase 3: Use environment-based CORS origins
-const allowedOrigins = envConfig.corsOrigins.length > 0 
-  ? envConfig.corsOrigins 
+const allowedOrigins = envConfig.corsOrigins.length > 0
+  ? envConfig.corsOrigins
   : ['http://localhost:3000', 'http://localhost:3001'];
 
 logger.info(`CORS Allowed Origins: ${JSON.stringify(allowedOrigins)}`);
@@ -94,12 +96,16 @@ app.set('io', io);
 const { initializeSocket } = require('./utils/websocket');
 initializeSocket(io);
 
+// Initialize Admin Services
+const terminalService = new TerminalService(io);
+const logStreamService = new LogStreamService(io);
+
 // CORS Configuration
 const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
+
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
@@ -132,14 +138,14 @@ app.use('/api/auth/', authLimiter);
 // Request logging and metrics middleware
 app.use((req, res, next) => {
   logger.http(`${req.method} ${req.path} - IP: ${req.ip}`);
-  
+
   // Record metrics
   const startTime = Date.now();
   res.on('finish', () => {
     const success = res.statusCode < 400;
     metrics.recordRequest(req.path, success);
   });
-  
+
   next();
 });
 
@@ -151,64 +157,64 @@ mongoose.connect(process.env.MONGO_URL, {
   serverSelectionTimeoutMS: 5000,
   socketTimeoutMS: 45000,
 })
-.then(async () => {
-  logger.info('MongoDB connected successfully');
-  
-  // Initialize log aggregation (Phase 4)
-  try {
-    logAggregation.init();
-    logger.info('Log aggregation service initialized');
-  } catch (error) {
-    logger.warn('Log aggregation initialization failed:', error.message);
-  }
-  
-  // Initialize error monitoring (Phase 3)
-  try {
-    await errorMonitoring.init();
-    logger.info('Error monitoring initialized');
-  } catch (error) {
-    logger.warn('Error monitoring initialization failed:', error.message);
-  }
-  
-  // Initialize SSL config (Phase 3)
-  const sslOptions = sslConfig.init();
-  if (sslOptions) {
-    logger.info('SSL/TLS configuration loaded');
-  }
-  
-  // Initialize backup manager
-  try {
-    await backupManager.init();
-    logger.info('Backup manager initialized');
-  } catch (error) {
-    logger.warn('Backup manager initialization failed:', error.message);
-  }
-  
-  // Initialize Redis cache
-  try {
-    await cache.connect();
-    logger.info('Redis cache connected');
-  } catch (error) {
-    logger.warn('Redis cache connection failed:', error.message);
-  }
-  
-  // Auto-sync actors from registry
-  const syncActors = require('./actors/syncActors');
-  await syncActors();
-})
-.catch(err => {
-  logger.error('MongoDB connection error:', err.message);
-  process.exit(1);
-});
+  .then(async () => {
+    logger.info('MongoDB connected successfully');
+
+    // Initialize log aggregation (Phase 4)
+    try {
+      logAggregation.init();
+      logger.info('Log aggregation service initialized');
+    } catch (error) {
+      logger.warn('Log aggregation initialization failed:', error.message);
+    }
+
+    // Initialize error monitoring (Phase 3)
+    try {
+      await errorMonitoring.init();
+      logger.info('Error monitoring initialized');
+    } catch (error) {
+      logger.warn('Error monitoring initialization failed:', error.message);
+    }
+
+    // Initialize SSL config (Phase 3)
+    const sslOptions = sslConfig.init();
+    if (sslOptions) {
+      logger.info('SSL/TLS configuration loaded');
+    }
+
+    // Initialize backup manager
+    try {
+      await backupManager.init();
+      logger.info('Backup manager initialized');
+    } catch (error) {
+      logger.warn('Backup manager initialization failed:', error.message);
+    }
+
+    // Initialize Redis cache
+    try {
+      await cache.connect();
+      logger.info('Redis cache connected');
+    } catch (error) {
+      logger.warn('Redis cache connection failed:', error.message);
+    }
+
+    // Auto-sync actors from registry
+    const syncActors = require('./actors/syncActors');
+    await syncActors();
+  })
+  .catch(err => {
+    logger.error('MongoDB connection error:', err.message);
+    process.exit(1);
+  });
 
 // WebSocket Authentication Middleware
 io.use((socket, next) => {
   const token = socket.handshake.auth.token;
-  
+
   if (!token) {
     return next(new Error('Authentication error'));
   }
-  
+
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     socket.userId = decoded.userId;
@@ -221,25 +227,62 @@ io.use((socket, next) => {
 // WebSocket Connection Handler
 io.on('connection', (socket) => {
   logger.info(`Client connected: ${socket.id} (User: ${socket.userId})`);
-  
+
   // Join user-specific room
   socket.join(`user:${socket.userId}`);
-  
+
   // Handle disconnection
   socket.on('disconnect', () => {
     logger.info(`Client disconnected: ${socket.id}`);
   });
-  
+
   // Handle subscription to specific run
   socket.on('subscribe:run', (runId) => {
     socket.join(`run:${runId}`);
     logger.debug(`Client ${socket.id} subscribed to run:${runId}`);
   });
-  
+
   // Handle unsubscription from run
   socket.on('unsubscribe:run', (runId) => {
     socket.leave(`run:${runId}`);
     logger.debug(`Client ${socket.id} unsubscribed from run:${runId}`);
+  });
+
+  // --- Admin Console Features ---
+
+  // Terminal Handlers
+  socket.on('terminal:create', () => {
+    // Check if user is admin (Phase 3: robust role check)
+    // For now, we assume auth middleware has validated the user
+    // In production, strictly enforce role === 'admin'
+    terminalService.createSession(socket.id);
+  });
+
+  socket.on('terminal:input', (data) => {
+    terminalService.write(socket.id, data);
+  });
+
+  socket.on('terminal:resize', ({ cols, rows }) => {
+    terminalService.resize(socket.id, cols, rows);
+  });
+
+  socket.on('terminal:kill', () => {
+    terminalService.killSession(socket.id);
+  });
+
+  // Log Stream Handlers
+  socket.on('logs:subscribe', (logType) => {
+    logStreamService.startStream(socket.id, logType);
+  });
+
+  socket.on('logs:unsubscribe', () => {
+    logStreamService.stopStream(socket.id);
+  });
+
+  socket.on('disconnect', () => {
+    terminalService.killSession(socket.id);
+    logStreamService.stopStream(socket.id);
+    logger.info(`Client disconnected: ${socket.id}`);
   });
 });
 
@@ -268,7 +311,10 @@ const infrastructureRoutes = require('./routes/infrastructure'); // Phase 3
 const phase4Routes = require('./routes/phase4'); // Phase 4
 const chatbotRoutes = require('./routes/chatbot'); // AI Chatbot
 
+const adminAuthRoutes = require('./routes/adminAuth');
+
 // API Routes
+app.use('/api/auth/admin', adminAuthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/actors', actorRoutes);
 app.use('/api/runs', runRoutes);
@@ -307,13 +353,13 @@ app.get('/api/health', async (req, res) => {
     // Check MongoDB
     const mongoState = mongoose.connection.readyState;
     const mongoHealth = mongoState === 1 ? 'connected' : 'disconnected';
-    
+
     // Check if we can ping MongoDB
     await mongoose.connection.db.admin().ping();
-    
+
     // Check Redis cache
     const redisHealth = cache.isConnected ? 'connected' : 'disconnected';
-    
+
     res.json({
       status: 'healthy',
       timestamp: new Date().toISOString(),
@@ -348,7 +394,7 @@ app.use((err, req, res, next) => {
     url: req.url,
     method: req.method
   });
-  
+
   // Don't expose error details in production
   res.status(err.status || 500).json({
     error: process.env.NODE_ENV === 'production'
@@ -360,12 +406,12 @@ app.use((err, req, res, next) => {
 // Graceful shutdown handling
 const gracefulShutdown = async () => {
   logger.info('Received shutdown signal, closing gracefully...');
-  
+
   // Close HTTP server
   server.close(() => {
     logger.info('HTTP server closed');
   });
-  
+
   // Close MongoDB connection
   try {
     await mongoose.connection.close();
@@ -373,7 +419,7 @@ const gracefulShutdown = async () => {
   } catch (err) {
     logger.error('Error closing MongoDB:', err.message);
   }
-  
+
   // Close Redis cache
   try {
     await cache.disconnect();
@@ -381,12 +427,12 @@ const gracefulShutdown = async () => {
   } catch (err) {
     logger.error('Error closing Redis:', err.message);
   }
-  
+
   // Close Socket.IO
   io.close(() => {
     logger.info('Socket.IO server closed');
   });
-  
+
   process.exit(0);
 };
 

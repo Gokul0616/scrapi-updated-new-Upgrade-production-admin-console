@@ -39,28 +39,58 @@ const transports = [
       winston.format.simple()
     )
   }),
-  // Error log file
-  new winston.transports.File({
-    filename: '/var/log/supervisor/backend-error.log',
-    level: 'error',
-    format: winston.format.combine(
-      winston.format.uncolorize(),
-      winston.format.json()
-    ),
-    maxsize: 5242880, // 5MB
-    maxFiles: 5,
-  }),
-  // Combined log file
-  new winston.transports.File({
-    filename: '/var/log/supervisor/backend-combined.log',
-    format: winston.format.combine(
-      winston.format.uncolorize(),
-      winston.format.json()
-    ),
-    maxsize: 5242880, // 5MB
-    maxFiles: 5,
-  }),
 ];
+
+// Add file transports based on environment
+if (process.env.NODE_ENV === 'production') {
+  transports.push(
+    new winston.transports.File({
+      filename: '/var/log/supervisor/backend-error.log',
+      level: 'error',
+      format: winston.format.combine(
+        winston.format.uncolorize(),
+        winston.format.json()
+      ),
+      maxsize: 5242880, // 5MB
+      maxFiles: 5,
+    }),
+    new winston.transports.File({
+      filename: '/var/log/supervisor/backend-combined.log',
+      format: winston.format.combine(
+        winston.format.uncolorize(),
+        winston.format.json()
+      ),
+      maxsize: 5242880, // 5MB
+      maxFiles: 5,
+    })
+  );
+} else {
+  // Local development logging
+  const logDir = path.join(process.cwd(), 'logs');
+  // Ensure log directory exists (sync is fine here as it's startup)
+  const fs = require('fs');
+  if (!fs.existsSync(logDir)) {
+    fs.mkdirSync(logDir, { recursive: true });
+  }
+
+  transports.push(
+    new winston.transports.File({
+      filename: path.join(logDir, 'backend-error.log'),
+      level: 'error',
+      format: winston.format.combine(
+        winston.format.uncolorize(),
+        winston.format.json()
+      ),
+    }),
+    new winston.transports.File({
+      filename: path.join(logDir, 'backend-combined.log'),
+      format: winston.format.combine(
+        winston.format.uncolorize(),
+        winston.format.json()
+      ),
+    })
+  );
+}
 
 // Create the logger
 const logger = winston.createLogger({

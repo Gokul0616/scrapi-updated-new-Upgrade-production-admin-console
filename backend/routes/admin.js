@@ -143,7 +143,7 @@ router.get('/backup/list', auth, async (req, res) => {
 router.post('/backup/restore', auth, async (req, res) => {
   try {
     const { backupName } = req.body;
-    
+
     if (!backupName) {
       return res.status(400).json({ error: 'Backup name is required' });
     }

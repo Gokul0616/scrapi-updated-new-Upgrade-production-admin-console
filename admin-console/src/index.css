@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+body {
+  background-color: #f2f3f3;
+  color: #161e2d;
+}
+
+.xterm-viewport {
+  overflow-y: auto;
+}
