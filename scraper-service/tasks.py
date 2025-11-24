@@ -15,13 +15,21 @@ import logging
 logger = logging.getLogger(__name__)
 
 @celery_app.task(bind=True, name='tasks.scrape_task')
-def scrape_task(self, actor_id, input_data):
+def scrape_task(self, actor_id, input_data, run_id=None):
     """
     Universal scraping task that routes to appropriate scraper
     """
+    # Extract run_id from input if not passed explicitly (backward compatibility)
+    if not run_id and isinstance(input_data, dict) and 'run_id' in input_data:
+        run_id = input_data.get('run_id')
+        
     try:
         # Update task state to STARTED
         self.update_state(state='STARTED', meta={'status': 'Scraping started'})
+        
+        # Send STARTED webhook
+        if run_id:
+            asyncio.run(_send_status_update(run_id, 'started'))
         
         # Route to appropriate scraper based on actor_id
         scraper_map = {
@@ -43,6 +51,10 @@ def scrape_task(self, actor_id, input_data):
         # Execute scraping
         result = scraper_func(input_data)
         
+        # Send SUCCESS webhook
+        if run_id:
+            asyncio.run(_send_status_update(run_id, 'success', result={'data': result}))
+        
         return {
             'status': 'success',
             'data': result
@@ -52,11 +64,50 @@ def scrape_task(self, actor_id, input_data):
         error_msg = str(e)
         error_trace = traceback.format_exc()
         
+        # Send ERROR webhook
+        if run_id:
+            asyncio.run(_send_status_update(run_id, 'error', error=error_msg))
+        
         return {
             'status': 'error',
             'error': error_msg,
             'traceback': error_trace
         }
+
+async def _send_status_update(run_id, status, result=None, error=None):
+    """
+    Send status update to Node.js backend via HTTP
+    """
+    import aiohttp
+    import os
+    
+    try:
+        backend_url = os.getenv('BACKEND_URL', 'http://backend:8001')
+        # Fallback for local development if not running in Docker network
+        if 'localhost' in backend_url and os.getenv('SERVICE_HOST') == '0.0.0.0':
+             # If we are inside docker but backend is localhost, we might need host.docker.internal
+             # But usually backend:8001 is correct for docker-compose
+             pass
+
+        payload = {'status': status}
+        if result:
+            payload['result'] = result
+        if error:
+            payload['error'] = error
+            
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f"{backend_url}/api/runs/{run_id}/status",
+                json=payload,
+                timeout=aiohttp.ClientTimeout(total=10)
+            ) as response:
+                if response.status == 200:
+                    logger.info(f"✅ Sent {status} update for run {run_id}")
+                else:
+                    logger.warning(f"⚠️ Failed to send {status} update: {response.status}")
+                    
+    except Exception as e:
+        logger.warning(f"Failed to send status update: {str(e)}")
 
 
 @celery_app.task(bind=True, name='tasks.enrich_websites_task')

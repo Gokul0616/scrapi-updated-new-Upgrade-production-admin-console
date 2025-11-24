@@ -47,8 +47,8 @@ const Layout = ({ children }) => {
                         <Menu size={24} />
                     </button>
                     <div className="font-bold text-lg flex items-center gap-2">
-                        <span className="text-[#ff9900]">AWS</span>
-                        <span>Console Clone</span>
+                        <span className="text-[#ff9900]">Scrapi</span>
+                        <span>Admin Console</span>
                     </div>
                 </div>
                 <div className="flex items-center gap-4">

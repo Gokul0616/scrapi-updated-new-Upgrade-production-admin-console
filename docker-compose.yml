@@ -38,8 +38,14 @@ services:
       - SERVICE_PORT=8002
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - BACKEND_URL=http://backend:8001
     depends_on:
       - redis
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
     restart: always
 
   celery-worker:
@@ -48,9 +54,15 @@ services:
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - BACKEND_URL=http://backend:8001
     depends_on:
       - redis
       - scraper-service
+    deploy:
+      resources:
+        limits:
+          cpus: '1.50'
+          memory: 2G
     restart: always
 
   mongo:
