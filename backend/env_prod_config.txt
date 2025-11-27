@@ -1,0 +1,6 @@
+PORT=8001
+MONGO_URL=mongodb://127.0.0.1:27017/scrapi
+JWT_SECRET=scrapi_production_secret_key_2025_secure_random_string
+NODE_ENV=production
+LOG_LEVEL=info
+CORS_ORIGINS=http://localhost:3000,http://localhost:3001,http://13.60.169.168:3000,http://13.60.169.168:3001,http://ec2-13-60-169-168.eu-north-1.compute.amazonaws.com:3000,http://ec2-13-60-169-168.eu-north-1.compute.amazonaws.com:3001

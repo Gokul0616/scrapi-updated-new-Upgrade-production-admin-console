@@ -36,7 +36,7 @@ export const WebSocketProvider = ({ children }) => {
 
     // In production, use relative path to connect through the API proxy
     // In development, connect directly to backend port
-    const backendUrl = isLocalDev ? 'http://localhost:8001' : 'http://51.20.193.44:8001';
+    const backendUrl = isLocalDev ? 'http://localhost:8001' : 'http://13.60.247.66:8001';
 
     const newSocket = io(backendUrl, {
       auth: {

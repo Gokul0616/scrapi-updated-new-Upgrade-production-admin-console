@@ -94,6 +94,60 @@ const actorRegistry = [
     ]
   },
   {
+    actorId: 'google-business',
+    name: 'Google Business Details Scraper',
+    title: 'Google Business Profile Extractor',
+    description: '🏢 Extract detailed business information including verified contacts, social media, and reviews for a specific business. Perfect for targeted lead generation.',
+    author: 'compass',
+    slug: 'compass/google-business-scraper',
+    category: 'Business & Leads',
+    icon: '🏢',
+    stats: { runs: 0, rating: 5.0, reviews: 10 },
+    pricingModel: 'Pay per result',
+    isPublic: true,
+    scraperFunction: null,
+    inputFields: [
+      {
+        key: 'business_name',
+        label: 'Business Name',
+        type: 'text',
+        required: true,
+        placeholder: 'e.g., Pizza Hut',
+        description: 'Name of the business to search for'
+      },
+      {
+        key: 'location',
+        label: 'Location',
+        type: 'text',
+        required: true,
+        placeholder: 'e.g., New York, NY',
+        description: 'Location of the business'
+      },
+      {
+        key: 'extract_reviews',
+        label: 'Extract Reviews',
+        type: 'checkbox',
+        required: false,
+        default: true,
+        description: 'Extract customer reviews'
+      },
+      {
+        key: 'extract_images',
+        label: 'Extract Images',
+        type: 'checkbox',
+        required: false,
+        default: true,
+        description: 'Extract business photos'
+      }
+    ],
+    outputFields: [
+      'title', 'category', 'address', 'city', 'state', 'countryCode',
+      'phone', 'phoneVerified', 'email', 'emailVerified', 'website',
+      'socialMedia', 'placeId', 'url', 'openingHours', 'priceLevel',
+      'totalScore', 'images[]', 'reviews[]'
+    ]
+  },
+  {
     actorId: 'amazon',
     name: 'Amazon Product Scraper',
     title: 'Amazon Product Data Extractor',
@@ -390,6 +444,44 @@ const actorRegistry = [
       'socialMedia.facebook', 'socialMedia.instagram', 'socialMedia.twitter', 'socialMedia.linkedin',
       'socialMedia.youtube', 'socialMedia.tiktok', 'socialMedia.pinterest', 'socialMedia.snapchat',
       'socialMedia.whatsapp', 'socialMedia.telegram'
+    ]
+  },
+  {
+    actorId: 'apollo',
+    name: 'Apollo.io Scraper',
+    title: 'Apollo.io Professional Contacts Extractor',
+    description: '🚀 Extract professional contact details and company information from Apollo.io using X-Ray search. Find: names, titles, companies, locations, LinkedIn profiles, and other social media links. No login required - uses public profiles via Google search.',
+    author: 'compass',
+    slug: 'compass/apollo-scraper',
+    category: 'Business & Leads',
+    icon: '🚀',
+    stats: { runs: 0, rating: 4.8, reviews: 150 },
+    pricingModel: 'Pay per result',
+    isPublic: true,
+    scraperFunction: null,
+    inputFields: [
+      {
+        key: 'search_terms',
+        label: 'Search Terms',
+        type: 'textarea',
+        required: true,
+        placeholder: 'Elon Musk Tesla\nSoftware Engineer Google\nCEO Microsoft',
+        description: 'People or companies to search for (one per line). Example: "Elon Musk Tesla", "Software Engineer Google"'
+      },
+      {
+        key: 'max_results',
+        label: 'Maximum Results per Search',
+        type: 'number',
+        required: false,
+        default: 10,
+        placeholder: '10',
+        description: 'Maximum number of profiles to scrape per search term (1-50)'
+      }
+    ],
+    outputFields: [
+      'name', 'title', 'company', 'location', 'description',
+      'linkedin_url', 'twitter_url', 'facebook_url', 'website',
+      'apollo_url', 'source'
     ]
   }
 ];

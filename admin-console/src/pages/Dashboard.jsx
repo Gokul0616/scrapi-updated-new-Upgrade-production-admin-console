@@ -6,16 +6,18 @@ import {
 import { Users, Activity, Server, AlertCircle } from 'lucide-react';
 
 const StatCard = ({ title, value, icon: Icon, color }) => (
-    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+    <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
         <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-medium text-gray-500">{title}</h3>
-            <div className={`p-2 rounded-full bg-${color}-100`}>
-                <Icon className={`w-5 h-5 text-${color}-600`} />
+            <h3 className="text-sm font-medium text-gray-400">{title}</h3>
+            <div className={`p-2 rounded-lg bg-${color}-500/10`}>
+                <Icon className={`w-5 h-5 text-${color}-400`} />
             </div>
         </div>
-        <div className="text-2xl font-bold text-gray-900">{value}</div>
+        <div className="text-2xl font-bold text-white">{value}</div>
     </div>
 );
+
+import { API_BASE_URL } from '../config';
 
 const Dashboard = () => {
     const [stats, setStats] = useState(null);
@@ -30,7 +32,7 @@ const Dashboard = () => {
     const fetchStats = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('/api/admin/stats', {
+            const response = await fetch(`${API_BASE_URL}/admin/stats`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (response.ok) {
@@ -58,10 +60,10 @@ const Dashboard = () => {
     if (loading) return <div className="p-8">Loading dashboard...</div>;
 
     return (
-        <div className="space-y-6">
+        <div className="p-6 space-y-6">
             <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-[#161e2d]">Dashboard</h1>
-                <div className="text-sm text-gray-500">Last updated: {new Date().toLocaleTimeString()}</div>
+                <h1 className="text-2xl font-bold text-white">Dashboard</h1>
+                <div className="text-sm text-gray-400">Last updated: {new Date().toLocaleTimeString()}</div>
             </div>
 
             {/* Stats Grid */}
@@ -94,33 +96,37 @@ const Dashboard = () => {
 
             {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Traffic Overview</h3>
+                <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
+                    <h3 className="text-lg font-medium text-white mb-4">Traffic Overview</h3>
                     <div className="h-80">
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={chartData}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                <XAxis dataKey="name" />
-                                <YAxis />
-                                <Tooltip />
-                                <Area type="monotone" dataKey="users" stackId="1" stroke="#0073bb" fill="#0073bb" fillOpacity={0.1} />
-                                <Area type="monotone" dataKey="runs" stackId="1" stroke="#ff9900" fill="#ff9900" fillOpacity={0.1} />
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" />
+                                <XAxis dataKey="name" stroke="#9ca3af" />
+                                <YAxis stroke="#9ca3af" />
+                                <Tooltip
+                                    contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', color: '#fff' }}
+                                />
+                                <Area type="monotone" dataKey="users" stackId="1" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.1} />
+                                <Area type="monotone" dataKey="runs" stackId="1" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.1} />
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Run Performance</h3>
+                <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
+                    <h3 className="text-lg font-medium text-white mb-4">Run Performance</h3>
                     <div className="h-80">
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={chartData}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                <XAxis dataKey="name" />
-                                <YAxis />
-                                <Tooltip />
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" />
+                                <XAxis dataKey="name" stroke="#9ca3af" />
+                                <YAxis stroke="#9ca3af" />
+                                <Tooltip
+                                    contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', color: '#fff' }}
+                                />
                                 <Legend />
-                                <Line type="monotone" dataKey="runs" stroke="#ff9900" strokeWidth={2} dot={false} />
+                                <Line type="monotone" dataKey="runs" stroke="#f59e0b" strokeWidth={2} dot={false} />
                             </LineChart>
                         </ResponsiveContainer>
                     </div>

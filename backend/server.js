@@ -31,7 +31,10 @@ const PORT = process.env.PORT || 8001;
 const envConfig = getConfig();
 
 // Security: Add Helmet middleware
-app.use(helmet());
+// Configure to allow cross-origin resource loading for static assets
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 
 // Trust proxy - required when running behind Kubernetes ingress or reverse proxy
 // This allows Express to properly read X-Forwarded-* headers
@@ -72,7 +75,18 @@ const server = http.createServer(app);
 // Phase 3: Use environment-based CORS origins
 const allowedOrigins = envConfig.corsOrigins.length > 0
   ? envConfig.corsOrigins
-  : ['http://localhost:3000', 'http://localhost:3001', 'http://51.20.193.44:3000', 'http://51.20.193.44:3001'];
+  : [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://51.20.193.44:3000',
+    'http://51.20.193.44:3001',
+    'http://ec2-51-20-193-44.eu-north-1.compute.amazonaws.com:3000',
+    'http://ec2-51-20-193-44.eu-north-1.compute.amazonaws.com:3001',
+    'http://13.60.247.66:3000',
+    'http://13.60.247.66:3001',
+    'http://ec2-13-60-169-168.eu-north-1.compute.amazonaws.com:3000',
+    'http://ec2-13-60-169-168.eu-north-1.compute.amazonaws.com:3001'
+  ];
 
 logger.info(`CORS Allowed Origins: ${JSON.stringify(allowedOrigins)}`);
 
@@ -134,6 +148,10 @@ app.use('/api/', limiter);
 
 // Apply strict rate limiting to authentication routes
 app.use('/api/auth/', authLimiter);
+
+// Serve static assets
+const path = require('path');
+app.use('/resources/image', express.static(path.join(__dirname, 'assets')));
 
 // Request logging and metrics middleware
 app.use((req, res, next) => {

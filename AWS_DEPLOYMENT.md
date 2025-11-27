@@ -41,18 +41,34 @@ newgrp docker
 ```
 
 ### 3. Deploy Application
-1.  **Clone your repository** or copy your project files to the server.
-2.  **Update Environment Variables**:
-    - Edit `docker-compose.yml` or create a `.env` file.
-    - Set `NODE_ENV=production`.
-    - Change `JWT_SECRET` to a secure random string.
-3.  **Run the application**:
+1.  **Transfer the deployment package**:
+    Copy `deployment.tar.gz` to your EC2 instance (e.g., using `scp`).
     ```bash
-    docker compose up --build -d
+    scp -i <your-key.pem> deployment.tar.gz ec2-user@<EC2-Public-IP>:~/
     ```
+2.  **SSH into your instance**:
+    ```bash
+    ssh -i <your-key.pem> ec2-user@<EC2-Public-IP>
+    ```
+3.  **Run the deployment script**:
+    ```bash
+    # Extract the script first (or just run the following if you have the tarball)
+    tar -xzf deployment.tar.gz deploy_all.sh
+    
+    # Run the deployment script
+    chmod +x deploy_all.sh
+    ./deploy_all.sh
+    ```
+    This script will:
+    - Install Node.js, Python, Redis, and PM2.
+    - Extract the application files.
+    - Install dependencies for Backend and Scraper Service.
+    - Start all services using PM2.
 
 ### 4. Access
-- Open your browser to `http://<EC2-Public-IP>`.
+- **Frontend**: `http://<EC2-Public-IP>:3000`
+- **Admin Console**: `http://<EC2-Public-IP>:3001`
+- **Backend API**: `http://<EC2-Public-IP>:8001`
 
 ---
 

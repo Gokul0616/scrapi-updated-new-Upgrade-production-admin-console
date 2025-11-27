@@ -8,15 +8,24 @@ const User = require('../models/User');
 const authMiddleware = require('../middleware/auth');
 const logger = require('../utils/logger');
 
+// Base URL for assets (use env var or default to current server)
+const BASE_URL = process.env.BACKEND_URL || 'http://localhost:8001';
+
+const profile1 = `${BASE_URL}/resources/image/profile1.png`;
+const profile2 = `${BASE_URL}/resources/image/profile2.png`;
+const profile3 = `${BASE_URL}/resources/image/profile3.png`;
+const profile4 = `${BASE_URL}/resources/image/profile4.png`;
+const profile5 = `${BASE_URL}/resources/image/profile5.png`;
+
 // Rate limiting is now handled globally in server.js
 
 // Avatar options
 const AVATAR_OPTIONS = [
-  'https://customer-assets.emergentagent.com/job_gmap-extract-pay/artifacts/ngzacwyp_image.png',
-  'https://customer-assets.emergentagent.com/job_gmap-extract-pay/artifacts/npdgup89_image.png',
-  'https://customer-assets.emergentagent.com/job_gmap-extract-pay/artifacts/og1zjq58_image.png',
-  'https://customer-assets.emergentagent.com/job_gmap-extract-pay/artifacts/ho6nlyi9_image.png',
-  'https://customer-assets.emergentagent.com/job_gmap-extract-pay/artifacts/6qvf6lwp_image.png'
+  profile1,
+  profile2,
+  profile3,
+  profile4,
+  profile5
 ];
 
 // Helper function to get random avatar
@@ -137,6 +146,12 @@ router.post('/login',
       if (!user) {
         logger.warn(`Failed login attempt for non-existent user: ${email}`);
         return res.status(401).json({ error: 'Invalid email or password' });
+      }
+
+      // Check if user is banned
+      if (user.isActive === false) {
+        logger.warn(`Login attempt by banned user: ${email}`);
+        return res.status(403).json({ error: 'Your account has been suspended. Please contact support.' });
       }
 
       // Check password

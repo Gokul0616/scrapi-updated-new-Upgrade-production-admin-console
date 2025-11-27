@@ -109,7 +109,11 @@ class GoogleMapsScraperV3(BaseScraper):
         extract_images = config.get('extract_images', False)
         
         all_results = []
-        context = await self.engine.create_context(use_proxy=True)
+        context = await self.engine.create_context(
+            use_proxy=True,
+            block_media=not extract_images,
+            block_fonts=True
+        )
         
         try:
             for term in search_terms:
@@ -146,7 +150,7 @@ class GoogleMapsScraperV3(BaseScraper):
                     await progress_callback(f"✅ Found {len(places)} places for '{term}'")
                 
                 # Extract details in parallel batches
-                batch_size = 5  # Process 5 places at once
+                batch_size = 3  # Reduced from 5 to conserve memory
                 places_to_process = places[:max_results]
                 
                 for i in range(0, len(places_to_process), batch_size):

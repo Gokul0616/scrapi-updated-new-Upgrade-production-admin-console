@@ -7,6 +7,7 @@ const cache = require('../utils/cache');
 const metrics = require('../utils/metrics');
 const User = require('../models/User');
 const Run = require('../models/Run');
+const Actor = require('../models/Actor');
 
 // ... (swagger docs omitted for brevity)
 
@@ -148,4 +149,158 @@ router.get('/stats', adminAuth, async (req, res) => {
   }
 });
 
+// Update user details
+router.put('/users/:id', adminAuth, async (req, res) => {
+  try {
+    const { plan, ramLimitMB, creditsLimit } = req.body;
+    const updateData = {};
+    if (plan) updateData.plan = plan;
+    if (ramLimitMB) updateData['usage.ramLimitMB'] = ramLimitMB;
+    if (creditsLimit) updateData['usage.creditsLimit'] = creditsLimit;
+
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { $set: updateData },
+      { new: true }
+    ).select('-password');
+
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    logger.info(`User updated by admin: ${user.email}`);
+    res.json(user);
+  } catch (error) {
+    logger.error('Failed to update user:', error.message);
+    res.status(500).json({ error: 'Failed to update user' });
+  }
+});
+
+// Ban/Unban user
+router.post('/users/:id/ban', adminAuth, async (req, res) => {
+  try {
+    const { isActive } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { isActive },
+      { new: true }
+    ).select('-password');
+
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    logger.info(`User ${isActive ? 'unbanned' : 'banned'} by admin: ${user.email}`);
+    res.json(user);
+  } catch (error) {
+    logger.error('Failed to ban/unban user:', error.message);
+    res.status(500).json({ error: 'Failed to update user status' });
+  }
+});
+
 module.exports = router;
+
+// Global Runs View
+router.get('/runs', adminAuth, async (req, res) => {
+  try {
+    const { page = 1, limit = 20, status, userId } = req.query;
+    const query = {};
+    if (status) query.status = status;
+    if (userId) query.userId = userId;
+
+    const runs = await Run.find(query)
+      .sort({ startedAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit))
+      .populate('userId', 'email username');
+
+    const total = await Run.countDocuments(query);
+
+    res.json({
+      runs,
+      totalPages: Math.ceil(total / limit),
+      currentPage: parseInt(page),
+      totalRuns: total
+    });
+  } catch (error) {
+    logger.error('Failed to fetch runs:', error.message);
+    res.status(500).json({ error: 'Failed to fetch runs' });
+  }
+});
+
+// Stop a run
+router.post('/runs/:id/stop', adminAuth, async (req, res) => {
+  try {
+    const run = await Run.findOne({ runId: req.params.id });
+    if (!run) return res.status(404).json({ error: 'Run not found' });
+
+    if (['succeeded', 'failed', 'aborted'].includes(run.status)) {
+      return res.status(400).json({ error: 'Run is already finished' });
+    }
+
+    run.status = 'aborted';
+    run.finishedAt = new Date();
+    run.error = 'Aborted by admin';
+    await run.save();
+
+    // TODO: Signal to scraper engine to stop the run (if applicable)
+
+    logger.info(`Run aborted by admin: ${run.runId}`);
+    res.json(run);
+  } catch (error) {
+    logger.error('Failed to stop run:', error.message);
+    res.status(500).json({ error: 'Failed to stop run' });
+  }
+});
+
+// Get all actors
+router.get('/actors', adminAuth, async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search } = req.query;
+    const query = {};
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { slug: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const actors = await Actor.find(query)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit))
+      .populate('userId', 'email username');
+
+    const total = await Actor.countDocuments(query);
+
+    res.json({
+      actors,
+      totalPages: Math.ceil(total / limit),
+      currentPage: parseInt(page),
+      totalActors: total
+    });
+  } catch (error) {
+    logger.error('Failed to fetch actors:', error.message);
+    res.status(500).json({ error: 'Failed to fetch actors' });
+  }
+});
+
+// Update actor status (verify/hide)
+router.put('/actors/:id', adminAuth, async (req, res) => {
+  try {
+    const { isVerified, isPublic } = req.body;
+    const updateData = {};
+    if (isVerified !== undefined) updateData.isVerified = isVerified;
+    if (isPublic !== undefined) updateData.isPublic = isPublic;
+
+    const actor = await Actor.findOneAndUpdate(
+      { actorId: req.params.id },
+      { $set: updateData },
+      { new: true }
+    );
+
+    if (!actor) return res.status(404).json({ error: 'Actor not found' });
+
+    logger.info(`Actor updated by admin: ${actor.actorId}`);
+    res.json(actor);
+  } catch (error) {
+    logger.error('Failed to update actor:', error.message);
+    res.status(500).json({ error: 'Failed to update actor' });
+  }
+});

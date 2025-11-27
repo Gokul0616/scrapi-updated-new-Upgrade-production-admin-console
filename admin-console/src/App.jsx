@@ -8,6 +8,8 @@ import Login from './pages/Login';
 
 import Signup from './pages/Signup';
 import Users from './pages/Users';
+import Runs from './pages/Runs';
+import Actors from './pages/Actors';
 
 const ProtectedRoute = ({ children }) => {
     const token = localStorage.getItem('token');
@@ -33,6 +35,18 @@ const App = () => {
                 <Route path="/users" element={
                     <ProtectedRoute>
                         <Users />
+                    </ProtectedRoute>
+                } />
+
+                <Route path="/runs" element={
+                    <ProtectedRoute>
+                        <Runs />
+                    </ProtectedRoute>
+                } />
+
+                <Route path="/actors" element={
+                    <ProtectedRoute>
+                        <Actors />
                     </ProtectedRoute>
                 } />
 

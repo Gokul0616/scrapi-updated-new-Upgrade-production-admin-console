@@ -8,7 +8,9 @@ import {
     LogOut,
     Menu,
     X,
-    Users
+    Users,
+    Box,
+    Play
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -25,6 +27,8 @@ const Layout = ({ children }) => {
     const navItems = [
         { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
         { icon: Users, label: 'Users', path: '/users' },
+        { icon: Play, label: 'Runs', path: '/runs' },
+        { icon: Box, label: 'Actors', path: '/actors' },
         { icon: Terminal, label: 'Terminal', path: '/terminal' },
         { icon: FileText, label: 'Logs', path: '/logs' },
         { icon: Settings, label: 'Settings', path: '/settings' },

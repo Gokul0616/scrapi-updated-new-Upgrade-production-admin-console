@@ -4,7 +4,7 @@ import axios from 'axios';
 // In production (preview domain), use same origin to avoid CORS
 // In local development, use the explicit backend URL
 const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const baseURL = isLocalDev ? 'http://localhost:8001' : 'http://51.20.193.44:8001';
+const baseURL = isLocalDev ? 'http://localhost:8001' : 'http://13.60.247.66:8001';
 
 // Create axios instance with base configuration
 const api = axios.create({

@@ -13,5 +13,5 @@ pm2 start "venv/bin/celery -A celery_app worker --loglevel=info --concurrency=1"
 # Save PM2 list
 pm2 save
 
-echo "Configuration updated. Concurrency set to 1."
+echo "Configuration updax₹ted. Concurrency set to 1."
 pm2 list

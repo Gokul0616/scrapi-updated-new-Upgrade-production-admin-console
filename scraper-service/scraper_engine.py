@@ -33,8 +33,8 @@ class ScraperEngine:
         )
         logger.info("Scraper engine initialized")
     
-    async def create_context(self, use_proxy: bool = False, ultra_fast: bool = False) -> BrowserContext:
-        """Create a new browser context with optional proxy and resource blocking for ultra-fast mode."""
+    async def create_context(self, use_proxy: bool = False, ultra_fast: bool = False, block_media: bool = False, block_fonts: bool = False) -> BrowserContext:
+        """Create a new browser context with optional proxy and resource blocking."""
         if not self.browser:
             await self.initialize()
         
@@ -67,10 +67,10 @@ class ScraperEngine:
         
         context = await self.browser.new_context(**context_options)
         
-        # Add resource blocking for ultra-fast mode (3-5x faster page loads)
-        if ultra_fast:
-            logger.info("🚀 Ultra-fast mode: Enabling resource blocking for 3-5x speed boost")
-            await context.route("**/*", lambda route: self._handle_ultra_fast_route(route))
+        # Configure resource blocking
+        if ultra_fast or block_media or block_fonts:
+            logger.info(f"Resource blocking enabled: ultra_fast={ultra_fast}, media={block_media}, fonts={block_fonts}")
+            await context.route("**/*", lambda route: self._handle_route(route, ultra_fast, block_media, block_fonts))
         
         # Add anti-detection scripts
         await context.add_init_script("""
@@ -94,28 +94,28 @@ class ScraperEngine:
         self.contexts.append(context)
         return context
     
-    async def _handle_ultra_fast_route(self, route):
-        """Handle route blocking for ultra-fast mode - blocks images, fonts, CSS, analytics."""
+    async def _handle_route(self, route, ultra_fast: bool, block_media: bool, block_fonts: bool):
+        """Handle route blocking based on configuration."""
         request = route.request
         resource_type = request.resource_type
         url = request.url.lower()
         
-        # Block images (biggest performance gain)
-        if resource_type == "image":
+        # Block images
+        if (ultra_fast or block_media) and resource_type == "image":
             await route.abort()
             return
         
         # Block fonts
-        if resource_type == "font" or any(ext in url for ext in ['.woff', '.woff2', '.ttf', '.otf']):
+        if (ultra_fast or block_fonts) and (resource_type == "font" or any(ext in url for ext in ['.woff', '.woff2', '.ttf', '.otf'])):
             await route.abort()
             return
         
-        # Block stylesheets (still get semantic HTML)
-        if resource_type == "stylesheet":
+        # Block stylesheets (only in ultra_fast mode as it might break layout dependent scraping)
+        if ultra_fast and resource_type == "stylesheet":
             await route.abort()
             return
         
-        # Block analytics and tracking
+        # Block analytics and tracking (always good to block if blocking is enabled)
         if any(domain in url for domain in [
             'google-analytics.com',
             'googletagmanager.com',
@@ -127,7 +127,7 @@ class ScraperEngine:
             await route.abort()
             return
         
-        # Allow everything else (HTML, JS for functionality, XHR)
+        # Allow everything else
         await route.continue_()
     
     async def new_page(self, context: Optional[BrowserContext] = None) -> Page:

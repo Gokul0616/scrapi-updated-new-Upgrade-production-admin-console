@@ -1,5 +1,6 @@
 from celery_app import celery_app
 from scrapers.google_maps import scrape_google_maps
+from scrapers.google_business import scrape_google_business
 from scrapers.amazon import scrape_amazon
 from scrapers.instagram import scrape_instagram
 from scrapers.twitter import scrape_twitter
@@ -7,6 +8,7 @@ from scrapers.facebook import scrape_facebook
 from scrapers.linkedin import scrape_linkedin
 from scrapers.tiktok import scrape_tiktok
 from scrapers.website import scrape_website
+from scrapers.apollo import scrape_apollo
 from website_enrichment import enrichment_service
 import traceback
 import asyncio
@@ -34,6 +36,7 @@ def scrape_task(self, actor_id, input_data, run_id=None):
         # Route to appropriate scraper based on actor_id
         scraper_map = {
             'google-maps': scrape_google_maps,
+            'google-business': scrape_google_business,
             'amazon': scrape_amazon,
             'instagram': scrape_instagram,
             'twitter': scrape_twitter,
@@ -41,6 +44,7 @@ def scrape_task(self, actor_id, input_data, run_id=None):
             'linkedin': scrape_linkedin,
             'tiktok': scrape_tiktok,
             'website': scrape_website,
+            'apollo': scrape_apollo,
         }
         
         scraper_func = scraper_map.get(actor_id)

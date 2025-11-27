@@ -149,7 +149,11 @@ class AmazonProductScraper(BaseScraper):
         all_products = []
         
         # Create browser context with anti-detection
-        context = await self.engine.create_context(use_proxy=False)
+        context = await self.engine.create_context(
+            use_proxy=False,
+            block_media=True,  # Block media to save bandwidth
+            block_fonts=True   # Block fonts
+        )
         
         try:
             for keyword in search_keywords:

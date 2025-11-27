@@ -29,6 +29,10 @@ const actorSchema = new mongoose.Schema({
     type: Boolean,
     default: true // true = visible in store, false = private user actor
   },
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });

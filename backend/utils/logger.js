@@ -43,9 +43,16 @@ const transports = [
 
 // Add file transports based on environment
 if (process.env.NODE_ENV === 'production') {
+  // Production logging - use local logs directory to avoid permission issues
+  const logDir = path.join(process.cwd(), 'logs');
+  const fs = require('fs');
+  if (!fs.existsSync(logDir)) {
+    fs.mkdirSync(logDir, { recursive: true });
+  }
+
   transports.push(
     new winston.transports.File({
-      filename: '/var/log/supervisor/backend-error.log',
+      filename: path.join(logDir, 'backend-error.log'),
       level: 'error',
       format: winston.format.combine(
         winston.format.uncolorize(),
@@ -55,7 +62,7 @@ if (process.env.NODE_ENV === 'production') {
       maxFiles: 5,
     }),
     new winston.transports.File({
-      filename: '/var/log/supervisor/backend-combined.log',
+      filename: path.join(logDir, 'backend-combined.log'),
       format: winston.format.combine(
         winston.format.uncolorize(),
         winston.format.json()

@@ -14,26 +14,32 @@ const authMiddleware = async (req, res, next) => {
   try {
     // Get token from header
     const token = req.header('Authorization')?.replace('Bearer ', '');
-    
+
     if (!token) {
       return res.status(401).json({ error: 'No authentication token provided' });
     }
 
     // Verify token
     const decoded = jwt.verify(token, JWT_SECRET);
-    
+
     // Find user
     const user = await User.findById(decoded.userId).select('-password');
-    
+
     if (!user) {
       logger.warn(`Authentication failed: User not found for token userId: ${decoded.userId}`);
       return res.status(401).json({ error: 'User not found' });
     }
 
+    // Check if user is banned
+    if (user.isActive === false) {
+      logger.warn(`Access attempt by banned user: ${user.email}`);
+      return res.status(403).json({ error: 'Your account has been suspended' });
+    }
+
     // Attach user to request
     req.user = user;
     req.userId = decoded.userId;
-    
+
     next();
   } catch (error) {
     if (error.name === 'JsonWebTokenError') {
